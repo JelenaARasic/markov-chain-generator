@@ -36,7 +36,7 @@ export default (state = initialState, action: Action) => {
                 fetched: true,
                 fetchedJokes: [
                     ...state.fetchedJokes,
-                    payload
+                    ...payload.fetchedJokes,
                 ]
             };
         case Types.FETCH_ALL_JOKES_FAILED:

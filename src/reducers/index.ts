@@ -11,7 +11,7 @@ export interface ApplicationState {
     generator: GeneratorState;
 }
 
-const reducers: Reducer<ApplicationState> = combineReducers({
+const reducers: Reducer<ApplicationState, AnyAction> = combineReducers({
   generator: generatorReducer,
 });
 
