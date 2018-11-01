@@ -1,9 +1,10 @@
 const isQuestion = (sentence: string) => sentence.match(/^(why|what|who|where|did|do|how)/i);
-const notEndingWords = ["a", "an", "the", "if", "or", "by", "but", "I", ",", "to", "the"];
+const notEndingWords = ['a', 'an', 'the', 'if', 'or', 'by', 'but', 'I', ',', 'to', 'the'];
 
 const shouldEndSentence = (word: string, upperLimit: number, len: number): boolean => {
-    const possibleEnding = notEndingWords.find((w) => w === word) === undefined;
-    return len >= (upperLimit) && possibleEnding;
+    if (word === undefined || word.length === 0) return true;
+    const possibleEnding = notEndingWords.find(w => w === word) === undefined;
+    return len >= upperLimit && possibleEnding;
 };
 
 const initialIsCapital = (word: string) => {
@@ -37,11 +38,8 @@ export default class MarkovChainGenerator {
     words: string[];
     hashMap: MarkovChainState;
     startWords: MarkovChainStartState;
-    endWords: MarkovChainStartState;
     minimumWords: number;
-    maximumWords: number;
     maximumQuotedSentenceLength: number;
-    totalWords: number;
 
     constructor(jokes: Joke[]) {
         // init
@@ -50,9 +48,6 @@ export default class MarkovChainGenerator {
         this.hashMap = {};
         this.startWords = {};
         this.minimumWords = 15;
-        this.maximumWords = 20;
-        this.totalWords = 0;
-        this.endWords = {};
         this.maximumQuotedSentenceLength = 3;
 
         // methods
@@ -60,8 +55,8 @@ export default class MarkovChainGenerator {
     }
 
     /*
-       For Each Joke do the calculation of staet
-    */
+         For Each Joke do the calculation of state
+      */
     tokenizeWords() {
         this.jokes.forEach((jokeObj: Joke) => {
             const jokeString = jokeObj.joke;
@@ -78,11 +73,11 @@ export default class MarkovChainGenerator {
     };
 
     /* Calculate Probabilities from moving from each word
-        To next one.
-        total probability must be 100%, so that we can always transition
-     */
+          To next one.
+          total probability must be 100%, so that we can always transition
+       */
     calculateState(joke: String) {
-        const jokeWords = joke.replace(/[?.!”,"]/g, "").split(' ');
+        const jokeWords = joke.replace(/[”‘"]/g, '').split(' ');
 
         // Ignore Empty String
         if (jokeWords.length === 0) return;
@@ -92,49 +87,44 @@ export default class MarkovChainGenerator {
             const firstWord = jokeWords[index];
             const secondWord = jokeWords[index + 1];
 
+            if (firstWord === secondWord || !secondWord) return;
+
             // If second word is undefined, we have parsed all words.
-            if (secondWord) {
-                 if (initialIsCapital(secondWord)) {
-                    this.updateStartWords(secondWord);
-                }
+            if (initialIsCapital(secondWord)) {
+                this.updateStartWords(secondWord);
+            } else if (!this.hashMap[firstWord]) {
                 // If we encounter word for first time, we fill initial count with 1 and add preceding word.
-                else if (!this.hashMap[firstWord]) {
-                    this.hashMap[firstWord] = {
-                        count: 1,
-                        words: {
-                            [secondWord]: 1,
-                        }
-                    };
+                this.hashMap[firstWord] = {
+                    count: 1,
+                    words: {
+                        [secondWord]: 1,
+                    },
+                };
+            } else {
+                // We already have a word, but first time encounter preceding word.
+                if (!this.hashMap[firstWord].words[secondWord]) {
+                    this.hashMap[firstWord].words[secondWord] = 1;
                 } else {
-                    // We already have a word, but first time encounter preceding word.
-                    if (!this.hashMap[firstWord].words[secondWord]) {
-                        this.hashMap[firstWord].words[secondWord] = 1;
-                    } else {
-                        // Both words appeared, increase their probability.
-                        this.hashMap[firstWord].words[secondWord]++;
-                    }
-                    // Increase count because word is seen already.
-                    this.hashMap[firstWord].count++;
+                    // Both words appeared, increase their probability.
+                    this.hashMap[firstWord].words[secondWord]++;
                 }
+                // Increase count because word is seen already.
+                this.hashMap[firstWord].count++;
             }
         });
-
-        this.totalWords += jokeWords.length;
     }
 
-    getRandomWordFromBeginning = (first: boolean = false): string => {
+    getRandomWordFromBeginning = (): string => {
         const numWords = Object.keys(this.startWords).reduce((a, b) => a + this.startWords[b], 0);
         const randomWord = Math.floor(numWords * Math.random());
         let count = 0;
-        let word: string = "";
+        let word: string = '';
 
-        Object.keys(this.startWords).some(
-            (key) => {
-                word = key;
-                count += this.startWords[key];
-                return count >= randomWord && !(first && (!this.hashMap[key] || this.hashMap[key].count === 1));
-            }
-        );
+        Object.keys(this.startWords).some(key => {
+            word = key;
+            count += this.startWords[key];
+            return count >= randomWord && !(!this.hashMap[key] || this.hashMap[key].count === 1);
+        });
 
         return word;
     };
@@ -143,23 +133,23 @@ export default class MarkovChainGenerator {
         const numWords = Object.keys(this.hashMap[word].words).reduce((a, b) => a + this.hashMap[word].words[b], 0);
         const randomWord = Math.floor(numWords * Math.random());
         let count = 0;
-        let foundWord: string = "";
+        let foundWord: string = '';
 
-        Object.keys(this.hashMap[word].words).some(
-            (key) => {
-                count += this.hashMap[word].words[key];
-                foundWord = key;
-                return count >= randomWord;
-            }
-        );
+        Object.keys(this.hashMap[word].words).some(key => {
+            count += this.hashMap[word].words[key];
+            foundWord = key;
+            return count >= randomWord;
+        });
 
         return foundWord;
     };
 
-    generateSentence = (first = false) => {
-        let prevWord: string = this.getRandomWordFromBeginning(first);
+    generateSentence = () => {
+        let prevWord: string = this.getRandomWordFromBeginning();
         let sentence: string = prevWord;
         let count = 1;
+        let doubleQuotesCount = 0;
+        let singleQuotesCount = 0;
 
         do {
             if (!this.hashMap[prevWord]) {
@@ -167,37 +157,51 @@ export default class MarkovChainGenerator {
             }
             prevWord = this.getRandomWordFromAnotherWord(prevWord);
             count++;
-            sentence += (" " + prevWord);
+            sentence += ' ' + prevWord;
+            console.log(sentence);
+            if (prevWord.indexOf('"') !== -1) {
+                doubleQuotesCount = 1 - doubleQuotesCount;
+            }
+            else if (prevWord[0] === "'") {
+                singleQuotesCount = 1 - singleQuotesCount;
+            }
         } while (!(shouldEndSentence(prevWord, this.minimumWords, sentence.length) && !this.hashMap[prevWord]));
+
+        if (singleQuotesCount > 0) {
+            sentence += "'";
+        } else if (
+            doubleQuotesCount > 0
+        ) {
+            sentence += '"';
+        }
+
+        if (isQuestion(sentence) && sentence.indexOf("?") === -1) {
+            sentence = sentence.slice(0, sentence.length - 1) + "?";
+        } else if (sentence.indexOf("?") > -1) {
+            sentence = sentence.slice(0, sentence.length - 1) + ".";
+        }
+
 
         return {
             sentence,
-            wordCount: count
+            wordCount: count,
         };
     };
 
-    generateJoke = () => {
+    generateJoke = (): string => {
         let firstSentence = this.generateSentence();
-        let secondSentence = {sentence: "", wordCount: 0};
-        let maxCount = 100;
-        while (firstSentence.wordCount < 8) {
-            firstSentence = this.generateSentence(true);
-            maxCount --;
-            if (maxCount === 0) break;
+        let secondSentence = {sentence: '', wordCount: 0};
+
+        while (firstSentence.wordCount < 5) {
+            firstSentence = this.generateSentence();
         }
 
         if (firstSentence.wordCount <= this.minimumWords) {
-            if (isQuestion(firstSentence.sentence)) {
-                firstSentence.sentence += "?";
-            } else {
-                firstSentence.sentence += ".";
-            }
             do {
                 secondSentence = this.generateSentence();
             } while (isQuestion(secondSentence.sentence));
-            secondSentence.sentence += ".";
         }
 
         return `${firstSentence.sentence} ${secondSentence.sentence}`;
-    }
+    };
 }

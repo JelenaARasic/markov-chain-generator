@@ -1,12 +1,13 @@
 import * as React from 'react';
 import logo from './logo.svg';
-import './App.css';
 import {connect} from "react-redux";
 import {ApplicationState} from "./reducers";
 import {AnyAction, bindActionCreators, Dispatch} from "redux";
 import {fetchAllJokes} from "./reducers/generator/actions";
 import MarkovChainGenerator from "./utils/MarkovChainGenerator";
 import {Joke} from "./utils/MarkovChainGenerator";
+import Button from "./components/Button/Button";
+import './App.css';
 
 interface Props {
     fetchAllJokes: () => void;
@@ -31,9 +32,6 @@ class App extends React.Component<Props, State> {
     fetchJokes = async () => {
         await this.props.fetchAllJokes();
         this.generator = new MarkovChainGenerator(this.props.jokes);
-        for (let i = 0;  i < 3; i++) {
-            console.log(this.generator.generateJoke());
-        }
     };
 
     generateJoke = () => {
@@ -47,11 +45,8 @@ class App extends React.Component<Props, State> {
             <div className="App">
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="logo"/>
-                    <p>
-                        Edit <code>src/App.js</code> and save to reload.
-                    </p>
                     <div> Joke: {this.state.joke} </div>
-                    <button className="button" disabled={isFetching} onClick={this.generateJoke}>Generate Joke </button>
+                    <Button onClick={this.generateJoke} title={"Generate Joke"} disabled={isFetching} />
                 </header>
             </div>
         );
