@@ -1,5 +1,4 @@
 const isQuestion = (sentence: string) => sentence.match(/^(why|what|who|where|did|do|how)/i);
-const endsWithPunctuation = (sentence: string) => sentence.match(/[.!?]$/);
 const notEndingWords = ["a", "an", "the", "if", "or", "by", "but", "I", ",", "to", "the"];
 
 const shouldEndSentence = (word: string, upperLimit: number, len: number): boolean => {
@@ -93,14 +92,13 @@ export default class MarkovChainGenerator {
             const firstWord = jokeWords[index];
             const secondWord = jokeWords[index + 1];
 
-            if (initialIsCapital(firstWord)) {
-                this.updateStartWords(firstWord);
-            }
-
             // If second word is undefined, we have parsed all words.
             if (secondWord) {
+                 if (initialIsCapital(secondWord)) {
+                    this.updateStartWords(secondWord);
+                }
                 // If we encounter word for first time, we fill initial count with 1 and add preceding word.
-                if (!this.hashMap[firstWord]) {
+                else if (!this.hashMap[firstWord]) {
                     this.hashMap[firstWord] = {
                         count: 1,
                         words: {
@@ -170,7 +168,7 @@ export default class MarkovChainGenerator {
             prevWord = this.getRandomWordFromAnotherWord(prevWord);
             count++;
             sentence += (" " + prevWord);
-        } while (!(shouldEndSentence(prevWord, this.minimumWords, sentence.length) && this.hashMap[prevWord]));
+        } while (!(shouldEndSentence(prevWord, this.minimumWords, sentence.length) && !this.hashMap[prevWord]));
 
         return {
             sentence,
@@ -181,10 +179,12 @@ export default class MarkovChainGenerator {
     generateJoke = () => {
         let firstSentence = this.generateSentence();
         let secondSentence = {sentence: "", wordCount: 0};
-        while (firstSentence.wordCount < 5) {
+        let maxCount = 100;
+        while (firstSentence.wordCount < 8) {
             firstSentence = this.generateSentence(true);
+            maxCount --;
+            if (maxCount === 0) break;
         }
-
 
         if (firstSentence.wordCount <= this.minimumWords) {
             if (isQuestion(firstSentence.sentence)) {

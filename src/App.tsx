@@ -51,14 +51,6 @@ class App extends React.Component<Props, State> {
                         Edit <code>src/App.js</code> and save to reload.
                     </p>
                     <div> Joke: {this.state.joke} </div>
-                    <a
-                        className="App-link"
-                        href="https://reactjs.org"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Learn React
-                    </a>
                     <button className="button" disabled={isFetching} onClick={this.generateJoke}>Generate Joke </button>
                 </header>
             </div>
