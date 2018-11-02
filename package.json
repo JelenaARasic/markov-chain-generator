@@ -2,6 +2,7 @@
   "name": "markov-chain-generator",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://xgrizx1.github.io/markov-chain-generator",
   "dependencies": {
     "@types/jest": "^23.3.9",
     "@types/node": "^10.12.1",
@@ -23,7 +24,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "react-scripts build",
+    "predeploy": "yarn build",
     "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
