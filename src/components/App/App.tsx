@@ -31,13 +31,19 @@ class App extends React.Component<Props, State> {
     }
 
     fetchJokes = async () => {
+        this.setState({
+           joke: "Fetching Jokes from API, please wait..."
+        });
         await this.props.fetchAllJokes();
+        this.setState({
+            joke: "Click 'Generate Joke' Button to generate new Joke"
+        });
         this.generator = new MarkovChainGenerator(this.props.jokes);
     };
 
     generateJoke = () => {
         const joke = this.generator.generateJoke();
-        this.setState({joke});
+        this.setState({joke: "Joke: " + joke});
     };
 
     render() {
@@ -46,7 +52,8 @@ class App extends React.Component<Props, State> {
             <div className={styles.App}>
                 <header className={styles["App-header"]}>
                     <img src={logo} className={styles["App-logo"]} alt="logo"/>
-                    <div className={styles.joke}> Joke: {this.state.joke} </div>
+                    <div className={styles.joke}> {this.state.joke} </div>
+                    {isFetching && <div className={styles.loader} />}
                     <Button onClick={this.generateJoke} title={"Generate Joke"} disabled={isFetching} />
                 </header>
             </div>
