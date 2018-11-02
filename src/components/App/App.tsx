@@ -1,13 +1,13 @@
 import * as React from 'react';
-import logo from './logo.svg';
+import logo from '../../logo.svg';
 import {connect} from "react-redux";
-import {ApplicationState} from "./reducers";
+import {ApplicationState} from "../../reducers/index";
 import {AnyAction, bindActionCreators, Dispatch} from "redux";
-import {fetchAllJokes} from "./reducers/generator/actions";
-import MarkovChainGenerator from "./utils/MarkovChainGenerator";
-import {Joke} from "./utils/MarkovChainGenerator";
-import Button from "./components/Button/Button";
-import './App.css';
+import {fetchAllJokes} from "../../reducers/generator/actions";
+import MarkovChainGenerator from "../../utils/MarkovChainGenerator";
+import {Joke} from "../../utils/MarkovChainGenerator";
+import Button from "../Button/Button";
+import styles from './App.module.css';
 
 interface Props {
     fetchAllJokes: () => void;
@@ -42,10 +42,10 @@ class App extends React.Component<Props, State> {
     render() {
         const {isFetching} = this.props;
         return (
-            <div className="App">
-                <header className="App-header">
-                    <img src={logo} className="App-logo" alt="logo"/>
-                    <div> Joke: {this.state.joke} </div>
+            <div className={styles.App}>
+                <header className={styles["App-header"]}>
+                    <img src={logo} className={styles["App-logo"]} alt="logo"/>
+                    <div className={styles.joke}> Joke: {this.state.joke} </div>
                     <Button onClick={this.generateJoke} title={"Generate Joke"} disabled={isFetching} />
                 </header>
             </div>

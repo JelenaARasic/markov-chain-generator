@@ -1,5 +1,5 @@
 import * as React from "react";
-import "./Button.css";
+import styles from "./Button.module.css";
 
 interface Props {
     onClick: () => void;
@@ -9,7 +9,7 @@ interface Props {
 
 const Button = ({onClick, title, disabled}: Props) => {
     return (
-        <button className={`button ${disabled && "disabled"}`} onClick={onClick}>
+        <button className={`${styles.button} ${disabled && styles.disabled}`} onClick={onClick}>
             {title}
         </button>
     );
