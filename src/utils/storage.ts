@@ -14,7 +14,6 @@ storage.set = (key: string, value: any): void => {
   let item: any;
   if (typeof value !== "string") {
     item = JSON.stringify(value);
-    debugger;
   } else {
     item = value;
   }

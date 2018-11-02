@@ -1,16 +1,6 @@
-const isQuestion = (sentence: string) => sentence.match(/^(why|what|who|where|did|do|how)/i);
-const notEndingWords = ['a', 'an', 'the', 'if', 'or', 'by', 'but', 'I', ',', 'to', 'the'];
-
-const shouldEndSentence = (word: string, upperLimit: number, len: number): boolean => {
-  if (word === undefined || word.length === 0) return true;
-  const possibleEnding = notEndingWords.find(w => w === word) === undefined;
-  return len >= upperLimit && possibleEnding;
-};
-
-const initialIsCapital = (word: string) => {
-  if (!word.length) return false;
-  return word[0] !== word[0].toLowerCase();
-};
+import {isQuestion, initialIsCapital, shouldEndSentence, generateHash} from "./commonFunctions";
+import storage from "./storage";
+import {STORED_JOKES} from "../reducers/generator/actions";
 
 // Original Response from API
 export interface Joke {
@@ -32,25 +22,24 @@ export interface MarkovChainStartState {
   [key: string]: number;
 }
 
+export interface Sentence {
+    sentence: string,
+    wordCount: number,
+}
+
 export default class MarkovChainGenerator {
-  // TS declaration
   jokes: Joke[];
   words: string[];
   hashMap: MarkovChainState;
   startWords: MarkovChainStartState;
   minimumWords: number;
-  maximumQuotedSentenceLength: number;
 
   constructor(jokes: Joke[]) {
-    // init
     this.jokes = jokes;
     this.words = [];
     this.hashMap = {};
     this.startWords = {};
     this.minimumWords = 15;
-    this.maximumQuotedSentenceLength = 3;
-
-    // methods
     this.tokenizeWords();
   }
 
@@ -112,8 +101,7 @@ export default class MarkovChainGenerator {
   getRandomWordFromBeginning = (): string => {
     const numWords = Object.keys(this.startWords).reduce((a, b) => a + this.startWords[b], 0);
     const randomWord = Math.floor(numWords * Math.random());
-    let count = 0;
-    let word: string = '';
+    let count = 0, word: string = '';
 
     Object.keys(this.startWords).some(key => {
       word = key;
@@ -127,8 +115,7 @@ export default class MarkovChainGenerator {
   getRandomWordFromAnotherWord = (word: string): string => {
     const numWords = Object.keys(this.hashMap[word].words).reduce((a, b) => a + this.hashMap[word].words[b], 0);
     const randomWord = Math.floor(numWords * Math.random());
-    let count = 0;
-    let foundWord: string = '';
+    let count = 0, foundWord: string = '';
 
     Object.keys(this.hashMap[word].words).some(key => {
       count += this.hashMap[word].words[key];
@@ -148,7 +135,7 @@ export default class MarkovChainGenerator {
     return sentence;
   };
 
-  generateSentence = () => {
+  generateSentence = (): Sentence => {
     let prevWord: string = this.getRandomWordFromBeginning();
     let sentence: string = prevWord;
     let count = 1;
@@ -165,9 +152,15 @@ export default class MarkovChainGenerator {
     sentence = this.handleSentenceEnd(sentence);
 
     return {
-      sentence: sentence.replace(/"|‘|“|/g, ''),
+      sentence: sentence.replace(/"|‘|“|/g, '').trim(),
       wordCount: count,
     };
+  };
+
+  updateStorage = (sentence: string): void => {
+    this.jokes.push({id: generateHash(), joke: sentence});
+    storage.set(STORED_JOKES, this.jokes);
+    this.calculateState(sentence);
   };
 
   generateJoke = (): string => {
@@ -183,7 +176,7 @@ export default class MarkovChainGenerator {
     }
 
     const sentence = `${firstSentence.sentence} ${secondSentence.sentence}`;
-    this.calculateState(sentence);
+    this.updateStorage(sentence);
     return sentence;
   };
 }

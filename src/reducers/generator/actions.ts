@@ -3,7 +3,7 @@ import {Dispatch} from "redux";
 import axios from "axios";
 import storage from "../../utils/storage"
 
-const STORED_JOKES = "STORED_JOKES";
+export const STORED_JOKES = "STORED_JOKES";
 
 export interface FetchAllJokes {
 }

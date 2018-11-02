@@ -16,6 +16,7 @@ interface Props {
 }
 
 interface State {
+    joke: string,
 }
 
 class App extends React.Component<Props, State> {
